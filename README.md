@@ -16,7 +16,7 @@ The data is provided in **JSON format** and includes detailed match events, play
 │   │   └── match.json
 │
 ├── Afriskaut Event Map 2024.pdf
-├── Pitch Coordinated For Afriskaut Event Data.gdoc
+├── Pitch Coordinated For Afriskaut Event Data.pdf
 ├── summary.csv
 └── README.md
 ```
