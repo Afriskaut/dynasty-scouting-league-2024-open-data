@@ -12,7 +12,7 @@ The data is provided in **JSON format** and includes detailed match events, play
 ```
 ├── Datasets/
 │   ├── MatchID/
-│   │   ├── events.json
+│   │   ├── events.jsonl
 │   │   └── match.json
 │
 ├── Afriskaut Event Map 2024.pdf
