@@ -19,6 +19,7 @@ The data includes detailed match events, player information, and match metadata,
 ├── Afriskaut Event Map - 2024.pdf                ← Event type definitions
 ├── Pitch Coordinates For Afriskaut Event Data.pdf ← Visual pitch coordinate reference
 ├── summary.csv                                   ← Event count summary across all matches
+├── Afriskaut.png
 └── README.md
 ```
 
