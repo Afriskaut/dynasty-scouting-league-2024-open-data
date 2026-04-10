@@ -9,17 +9,18 @@ The data includes detailed match events, player information, and match metadata,
 ## Repository Structure
 
 ```
-├── Datasets.zip                                  ← All match data (unzip to use)
+├── Datasets.zip                                   ← All match data (unzip to use)
 │   └── Datasets/
 │       └── <MatchID>/
-│           ├── events.jsonl                      ← Match events (one JSON object per line)
-│           └── match.json                        ← Match metadata and lineups
+│           ├── events.jsonl                       ← Match events (one JSON object per line)
+│           └── match.json                         ← Match metadata and lineups
 │
-├── getting_started.ipynb                         ← Starter notebook (begin here)
-├── Afriskaut Event Map - 2024.pdf                ← Event type definitions
+├── getting_started.ipynb                          ← Start here
+├── afriskaut_utils.py                             ← Utility functions used by the notebook
+├── Afriskaut Event Map - 2024.pdf                 ← Event type definitions
 ├── Pitch Coordinates For Afriskaut Event Data.pdf ← Visual pitch coordinate reference
-├── summary.csv                                   ← Event count summary across all matches
-├── Afriskaut.png
+├── Afriskaut.png                                  ← Logo
+├── summary.csv                                    ← Event count summary across all matches
 └── README.md
 ```
 
@@ -29,21 +30,29 @@ The data includes detailed match events, player information, and match metadata,
 
 ### 1. Download and unzip the dataset
 
-The match data is distributed as a single zip file due to size. Download it from the GitHub interface or via the command line:
-
 ```bash
-# Download the zip
 wget https://github.com/Afriskaut/dynasty-scouting-league-2024-open-data/raw/main/Datasets.zip
-
-# Unzip
 unzip Datasets.zip
 ```
 
-This will produce a `Datasets/` folder with one subfolder per match, identified by `MatchID`.
+This produces a `Datasets/` folder with one subfolder per match, identified by `MatchID`.
 
-### 2. Open the starter notebook
+### 2. Install dependencies
 
-Open `getting_started.ipynb` to see a working example that loads a match, filters for a specific event type, and visualises events on the pitch. It requires only `pandas` and `matplotlib`.
+```bash
+pip install pandas matplotlib
+```
+
+### 3. Open the notebook
+
+Open `getting_started.ipynb`. It uses helper functions from `afriskaut_utils.py` — make sure both files are in the same directory.
+
+The notebook covers:
+- Listing available matches
+- Loading match metadata and events
+- Exploring event type distributions
+- Plotting any event type on a correctly oriented pitch
+- Loading the full dataset across all matches
 
 ---
 
@@ -51,37 +60,24 @@ Open `getting_started.ipynb` to see a working example that loads a match, filter
 
 ### events.jsonl
 
-Each line in this file is a self-contained JSON object representing a single event. JSONL (JSON Lines) format means you can stream or process events line by line without loading the full file into memory.
+Each line is a self-contained JSON object representing one event. JSONL format means you can stream or process events line by line without loading the full file into memory.
 
 ```python
-import json
+from afriskaut_utils import load_match, load_events
 
-with open("Datasets/<MatchID>/events.jsonl") as f:
-    events = [json.loads(line) for line in f]
+match  = load_match("Datasets/<MatchID>")
+events = load_events("Datasets/<MatchID>")
 ```
 
 ### match.json
 
-A single JSON object containing match metadata:
-
-- Home and away team names
-- Match score
-- Lineups and player names
-- Starting directions
-- Match information
-
-```python
-import json
-
-with open("Datasets/<MatchID>/match.json") as f:
-    match = json.load(f)
-```
+A single JSON object containing match metadata: team names, score, lineups, starting directions, substitutions, and timing information.
 
 ---
 
 ## Pitch Coordinate System
 
-All event locations use a custom pitch coordinate system.
+All event locations use a custom coordinate system.
 
 **Pitch dimensions:**
 - Length (X axis): **497**
@@ -89,9 +85,7 @@ All event locations use a custom pitch coordinate system.
 
 ```
 (0,0) ---------------------- (497,0)
-  |                            |
   |          PITCH             |
-  |                            |
 (0,328) -------------------- (497,328)
 ```
 
@@ -112,24 +106,19 @@ The event map covers:
 - How events are represented in the data
 - Additional attributes attached to each event type
 
-Consult the Event Map when interpreting event data.
-
 ---
 
 ## Event Summary File
 
-`summary.csv` contains a summary of event counts per match. Use it for:
-- Quick exploratory analysis
-- Dataset overview and validation
-- Statistical summaries
+`summary.csv` contains a summary of event counts per match, useful for quick exploratory analysis and dataset validation.
 
 ---
 
 ## Example Use Cases
 
-- Football event data analysis
 - Player scouting and profiling models
 - Passing networks and press maps
+- Shot maps and expected goals models
 - Tactical and positional analysis
 - Data visualisation projects
 
@@ -137,10 +126,10 @@ Consult the Event Map when interpreting event data.
 
 ## Notes
 
-- All coordinates follow the **497 × 328** pitch system described above
-- Event types and tags must be interpreted using `Afriskaut Event Map - 2024.pdf`
-- Each match is stored independently under its `MatchID`
+- All coordinates follow the **497 × 328** pitch system
 - Event data uses **JSONL format** (one event per line); match metadata uses standard **JSON**
+- Each match is stored independently under its `MatchID`
+- Event types must be interpreted using `Afriskaut Event Map - 2024.pdf`
 
 ---
 
