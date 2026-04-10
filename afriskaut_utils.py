@@ -358,3 +358,139 @@ def plot_events(
         f"Plotted {len(home_events) + len(away_events)} '{event_label}' events  "
         f"({len(home_events)} home · {len(away_events)} away)"
     )
+
+
+def plot_events_with_arrows(
+    match: dict,
+    home_events: pd.DataFrame,
+    away_events: pd.DataFrame,
+    event_label: str = "Events",
+    x_start_col: str = "event_start_x",
+    y_start_col: str = "event_start_y",
+    x_end_col:   str = "event_end_x",
+    y_end_col:   str = "event_end_y",
+    logo_path:   str = "Afriskaut.png",
+):
+    """
+    Plot events as arrows from start position to end position.
+    Rows missing either endpoint are plotted as dots only.
+
+    Parameters
+    ----------
+    match        : dict from match.json
+    home_events  : DataFrame from build_plot_data (home slice)
+    away_events  : DataFrame from build_plot_data (away slice)
+    event_label  : label shown in title (e.g. 'Pass', 'Carry')
+    x_start_col  : column for start x (should already be x_norm from build_plot_data)
+    y_start_col  : column for start y (should already be y_norm from build_plot_data)
+    x_end_col    : column for end x coordinate in raw data
+    y_end_col    : column for end y coordinate in raw data
+    logo_path    : path to Afriskaut.png
+    """
+    home_name  = match.get("home_team_string", "Home")
+    away_name  = match.get("away_team_string", "Away")
+    home_goals = match.get("home_goals", "")
+    away_goals = match.get("away_goals", "")
+    home_color, away_color = team_colors(match)
+
+    fig = plt.figure(figsize=(16, 11), facecolor="#1a1a2e")
+    ax  = fig.add_axes([0.05, 0.12, 0.90, 0.76])
+    draw_pitch(ax, match)
+
+    total_home = len(home_events)
+    total_away = len(away_events)
+
+    for df, color, label_name in [
+        (home_events, home_color, home_name),
+        (away_events, away_color, away_name),
+    ]:
+        has_end = (
+            x_end_col in df.columns and
+            y_end_col in df.columns
+        )
+
+        with_end    = pd.DataFrame()
+        without_end = df  # default: treat all as dots
+
+        if has_end:
+            end_mask    = df[x_end_col].notna() & df[y_end_col].notna()
+            with_end    = df[end_mask].copy()
+            without_end = df[~end_mask].copy()
+
+            # Cast end coords
+            with_end["_x_end"] = pd.to_numeric(with_end[x_end_col], errors="coerce")
+            with_end["_y_end"] = pd.to_numeric(with_end[y_end_col], errors="coerce")
+            with_end = with_end.dropna(subset=["_x_end", "_y_end"])
+
+            # Draw arrows
+            for _, row in with_end.iterrows():
+                dx = row["_x_end"] - row["x_norm"]
+                dy = row["_y_end"] - row["y_norm"]
+                ax.annotate(
+                    "",
+                    xy=(row["_x_end"], row["_y_end"]),
+                    xytext=(row["x_norm"], row["y_norm"]),
+                    arrowprops=dict(
+                        arrowstyle="-|>",
+                        color=color,
+                        lw=1.2,
+                        alpha=0.65,
+                        mutation_scale=8,
+                    ),
+                    zorder=4,
+                )
+
+            # Start dots for arrowed events
+            ax.scatter(
+                with_end["x_norm"], with_end["y_norm"],
+                color=color, s=30, alpha=0.9, zorder=5,
+            )
+
+        # Dot-only events (no end coords)
+        if not without_end.empty:
+            ax.scatter(
+                without_end["x_norm"], without_end["y_norm"],
+                color=color, s=45, alpha=0.75, zorder=4,
+                marker="o",
+            )
+
+        count = total_home if label_name == home_name else total_away
+        # invisible scatter just for the legend entry
+        ax.scatter([], [], color=color, s=45, label=f"{label_name} ({count})")
+
+    ax.legend(
+        loc="lower center",
+        bbox_to_anchor=(0.5, -0.055),
+        ncol=2,
+        frameon=True,
+        framealpha=0.2,
+        facecolor="#1a1a2e",
+        edgecolor="white",
+        fontsize=11,
+        markerscale=1.5,
+        labelcolor="white",
+    )
+
+    fig.text(0.5, 0.93,
+             f"{home_name}  {home_goals} – {away_goals}  {away_name}",
+             ha="center", va="top",
+             color="white", fontsize=15, fontweight="bold")
+    fig.text(0.5, 0.895,
+             f"{event_label} map  ·  start & end positions  ·  {match.get('date', '')}",
+             ha="center", va="top",
+             color="#aaaaaa", fontsize=10)
+
+    try:
+        logo    = mpimg.imread(logo_path)
+        logo_ax = fig.add_axes([0.83, 0.01, 0.12, 0.07])
+        logo_ax.imshow(logo)
+        logo_ax.axis("off")
+    except FileNotFoundError:
+        fig.text(0.92, 0.02, "Afriskaut", ha="right", va="bottom",
+                 color="#aaaaaa", fontsize=9, style="italic")
+
+    plt.show()
+    print(
+        f"Plotted {total_home + total_away} '{event_label}' events  "
+        f"({total_home} home · {total_away} away)"
+    )
